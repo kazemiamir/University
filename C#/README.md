@@ -1,4 +1,4 @@
-# Academic Project Repository  
+### Academic Project Repository  
 
 This repository has been created as part of an academic project submission for the Programming course. It includes the following components:  
 
