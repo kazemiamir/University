@@ -1,0 +1,15 @@
+D:\GitHub\Project\LibraryManager\LibraryManager\bin\Debug\LibraryManager.exe.config
+D:\GitHub\Project\LibraryManager\LibraryManager\bin\Debug\LibraryManager.exe
+D:\GitHub\Project\LibraryManager\LibraryManager\bin\Debug\LibraryManager.pdb
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.csproj.AssemblyReference.cache
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.Properties.Resources.resources
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.csproj.GenerateResource.cache
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.csproj.CoreCompileInputs.cache
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.exe
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.pdb
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.SignUpForm.resources
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.LoginForm.resources
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.MainForm.resources
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.ManageBooksForm.resources
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.RegisterLoanForm.resources
+D:\GitHub\Project\LibraryManager\LibraryManager\obj\Debug\LibraryManager.ManageMembersForm.resources
