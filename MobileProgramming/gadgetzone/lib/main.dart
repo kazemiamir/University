@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'widgets/main_layout.dart';
+import 'routes.dart';
+import 'screens/auth/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -35,8 +36,29 @@ class MyApp extends StatelessWidget {
           selectedItemColor: Colors.purple,
           unselectedItemColor: Colors.grey,
         ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.purple,
+            foregroundColor: Colors.white,
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.purple,
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.purple),
+          ),
+        ),
       ),
-      home: const MainLayout(),
+      initialRoute: Routes.login,
+      routes: Routes.getRoutes(),
     );
   }
 }
