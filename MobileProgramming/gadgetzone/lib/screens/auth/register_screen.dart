@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../routes.dart';
+import '../../services/auth_service.dart';
 import 'dart:math';
 
 class RegisterScreen extends StatefulWidget {
@@ -17,9 +18,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _authService = AuthService();
   String _generatedUsername = '';
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -49,11 +52,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return result.toString();
   }
 
-  void _handleRegister() {
+  Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Add actual registration logic here
-      Navigator.pushReplacementNamed(context, Routes.home);
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        // Check if phone number is already taken
+        final isPhoneTaken = await _authService.isPhoneNumberTaken(_phoneController.text);
+        if (isPhoneTaken) {
+          _showError('این شماره موبایل قبلاً ثبت شده است');
+          return;
+        }
+
+        // Check if email is already taken
+        final isEmailTaken = await _authService.isEmailTaken(_emailController.text);
+        if (isEmailTaken) {
+          _showError('این ایمیل قبلاً ثبت شده است');
+          return;
+        }
+
+        // Register user
+        final response = await _authService.signUp(
+          name: _nameController.text,
+          phone: _phoneController.text,
+          email: _emailController.text,
+          password: _passwordController.text,
+          username: _generatedUsername,
+        );
+
+        if (response?.user != null) {
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, Routes.home);
+          }
+        }
+      } catch (e) {
+        _showError(e.toString());
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
@@ -80,6 +133,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _nameController,
                   textDirection: TextDirection.rtl,
+                  enabled: !_isLoading,
+                  autofocus: true,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
                     labelText: 'نام و نام خانوادگی',
                     prefixIcon: Icon(Icons.person_outline),
@@ -94,8 +150,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _phoneController,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: false,
+                    signed: false,
+                  ),
                   textDirection: TextDirection.ltr,
+                  enabled: !_isLoading,
+                  textInputAction: TextInputAction.next,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(11),
@@ -120,17 +181,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textDirection: TextDirection.ltr,
+                  enabled: !_isLoading,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
                     labelText: 'ایمیل',
+                    hintText: 'example@domain.com',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'لطفا ایمیل خود را وارد کنید';
                     }
-                    if (!value.contains('@')) {
-                      return 'لطفا یک ایمیل معتبر وارد کنید';
+                    
+                    // Comprehensive email validation
+                    final emailRegex = RegExp(
+                      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                      caseSensitive: false,
+                    );
+                    
+                    if (!emailRegex.hasMatch(value)) {
+                      return 'لطفا یک ایمیل معتبر وارد کنید (مثال: example@domain.com)';
                     }
+
+                    // Additional checks
+                    if (value.startsWith('.') || value.endsWith('.')) {
+                      return 'ایمیل نمی‌تواند با نقطه شروع یا تمام شود';
+                    }
+                    
+                    if (value.contains('..')) {
+                      return 'ایمیل نمی‌تواند شامل دو نقطه پشت سر هم باشد';
+                    }
+
                     return null;
                   },
                 ),
@@ -176,6 +257,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
                   textDirection: TextDirection.ltr,
+                  enabled: !_isLoading,
+                  textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: 'رمز عبور',
                     prefixIcon: const Icon(Icons.lock_outline),
@@ -183,7 +266,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       icon: Icon(
                         _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
                       ),
-                      onPressed: () {
+                      onPressed: _isLoading ? null : () {
                         setState(() {
                           _isPasswordVisible = !_isPasswordVisible;
                         });
@@ -205,6 +288,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _confirmPasswordController,
                   obscureText: !_isConfirmPasswordVisible,
                   textDirection: TextDirection.ltr,
+                  enabled: !_isLoading,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _handleRegister(),
                   decoration: InputDecoration(
                     labelText: 'تکرار رمز عبور',
                     prefixIcon: const Icon(Icons.lock_outline),
@@ -212,7 +298,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       icon: Icon(
                         _isConfirmPasswordVisible ? Icons.visibility_off : Icons.visibility,
                       ),
-                      onPressed: () {
+                      onPressed: _isLoading ? null : () {
                         setState(() {
                           _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
                         });
@@ -231,12 +317,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _handleRegister,
-                  child: const Text('ثبت‌نام'),
+                  onPressed: _isLoading ? null : _handleRegister,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text('ثبت‌نام'),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
-                  onPressed: () {
+                  onPressed: _isLoading ? null : () {
                     Navigator.pop(context);
                   },
                   child: const Text('قبلاً ثبت‌نام کرده‌اید؟ وارد شوید'),

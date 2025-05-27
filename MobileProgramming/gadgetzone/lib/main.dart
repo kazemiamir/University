@@ -1,8 +1,63 @@
 import 'package:flutter/material.dart';
 import 'routes.dart';
 import 'screens/auth/login_screen.dart';
+import 'services/supabase_config.dart';
+import 'dart:io' show Platform;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  bool isConnected = false;
+  int retryCount = 0;
+  const maxRetries = 3;
+  const retryDelay = Duration(seconds: 5);
+
+  print('\n=== اطلاعات سیستم ===');
+  print('سیستم عامل: ${Platform.operatingSystem}');
+  print('نسخه سیستم عامل: ${Platform.operatingSystemVersion}');
+  print('تعداد تلاش‌های مجدد: $maxRetries');
+  print('فاصله بین تلاش‌ها: ${retryDelay.inSeconds} ثانیه');
+  print('=====================\n');
+
+  while (!isConnected && retryCount < maxRetries) {
+    try {
+      if (retryCount > 0) {
+        print('\n=== تلاش مجدد ${retryCount + 1} از $maxRetries ===');
+        print('در حال انتظار به مدت ${retryDelay.inSeconds} ثانیه...');
+        await Future.delayed(retryDelay);
+      }
+
+      print('شروع مقداردهی اولیه Supabase...');
+      await SupabaseConfig.initialize();
+      
+      print('تست اتصال...');
+      isConnected = await SupabaseConfig.checkConnection();
+      
+      if (!isConnected) {
+        throw Exception('تست اتصال ناموفق بود');
+      }
+      
+      print('اتصال با موفقیت برقرار شد');
+      break;
+
+    } catch (e) {
+      print('\n!!! خطا در تلاش ${retryCount + 1} !!!');
+      print('نوع خطا: ${e.runtimeType}');
+      print('پیام خطا: $e');
+      retryCount++;
+      
+      if (retryCount >= maxRetries) {
+        print('\n=== تمام تلاش‌ها ناموفق بود ===');
+        print('لطفاً موارد زیر را بررسی کنید:');
+        print('1. اتصال اینترنت خود را چک کنید');
+        print('2. پورت‌های 80 و 443 در فایروال باز باشند');
+        print('3. برنامه را کاملاً ببندید و دوباره اجرا کنید');
+        print('4. کش برنامه را پاک کنید');
+        print('============================\n');
+      }
+    }
+  }
+  
   runApp(const MyApp());
 }
 
