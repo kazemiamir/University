@@ -6,6 +6,8 @@ import 'services/supabase_config.dart';
 import 'dart:io' show Platform;
 import 'providers/cart_provider.dart';
 import 'screens/home_page.dart';
+import 'screens/main_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,16 +71,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (ctx) => CartProvider(),
-        ),
-      ],
+    return ChangeNotifierProvider(
+      create: (ctx) => CartProvider(),
       child: MaterialApp(
         title: 'GadgetZone',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.purple),
+          fontFamily: 'Vazir',
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
           bottomNavigationBarTheme: const BottomNavigationBarThemeData(
             selectedItemColor: Colors.purple,
@@ -104,9 +103,25 @@ class MyApp extends StatelessWidget {
               borderSide: const BorderSide(color: Colors.purple),
             ),
           ),
+          textTheme: const TextTheme(
+            bodyLarge: TextStyle(fontFamily: 'Vazir'),
+            bodyMedium: TextStyle(fontFamily: 'Vazir'),
+            titleLarge: TextStyle(fontFamily: 'Vazir'),
+            titleMedium: TextStyle(fontFamily: 'Vazir'),
+            titleSmall: TextStyle(fontFamily: 'Vazir'),
+          ),
         ),
-        initialRoute: Routes.home,
-        routes: Routes.getRoutes(),
+        locale: const Locale('fa', 'IR'),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('fa', 'IR'),
+        ],
+        home: const MainScreen(),
+        debugShowCheckedModeBanner: false,
       ),
     );
   }
