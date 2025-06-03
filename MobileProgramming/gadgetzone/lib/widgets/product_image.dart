@@ -25,24 +25,11 @@ class ProductImage extends StatelessWidget {
         return Container(
           width: width,
           height: height,
-          color: Colors.grey[200],
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.image_not_supported_outlined,
-                size: 40,
-                color: Colors.grey[400],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'تصویر در دسترس نیست',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-              ),
-            ],
+          color: Colors.grey[100],
+          child: Icon(
+            Icons.image_not_supported_outlined,
+            size: 40,
+            color: Colors.grey[300],
           ),
         );
       },
@@ -51,7 +38,7 @@ class ProductImage extends StatelessWidget {
         return Container(
           width: width,
           height: height,
-          color: Colors.grey[200],
+          color: Colors.grey[100],
           child: Center(
             child: CircularProgressIndicator(
               value: loadingProgress.expectedTotalBytes != null

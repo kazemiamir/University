@@ -26,15 +26,14 @@ class _ProductsPageState extends State<ProductsPage> {
   @override
   void initState() {
     super.initState();
-    // Load products when the page is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductProvider>().loadAllProducts();
     });
   }
 
-  void _filterProducts() {
+  void _filterProducts(List<Product> products) {
     setState(() {
-      _filteredProducts = dummyProducts.where((product) {
+      _filteredProducts = products.where((product) {
         final matchesSearch = product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
             (product.description?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
         final matchesCategory = _selectedCategory.isEmpty || product.category == _selectedCategory;
@@ -79,6 +78,9 @@ class _ProductsPageState extends State<ProductsPage> {
         }
 
         final products = productProvider.products;
+        if (_filteredProducts.isEmpty && _searchQuery.isEmpty && _selectedCategory.isEmpty) {
+          _filteredProducts = products;
+        }
 
         return Scaffold(
           appBar: AppBar(
@@ -148,7 +150,7 @@ class _ProductsPageState extends State<ProductsPage> {
                               setState(() {
                                 _searchQuery = '';
                               });
-                              _filterProducts();
+                              _filterProducts(products);
                             },
                           )
                         : null,
@@ -160,7 +162,7 @@ class _ProductsPageState extends State<ProductsPage> {
                     setState(() {
                       _searchQuery = value;
                     });
-                    _filterProducts();
+                    _filterProducts(products);
                   },
                 ),
               ),
@@ -180,7 +182,7 @@ class _ProductsPageState extends State<ProductsPage> {
                           value: '',
                           child: Text('همه'),
                         ),
-                        ...dummyProducts
+                        ...products
                             .map((p) => p.category)
                             .toSet()
                             .map(
@@ -194,7 +196,7 @@ class _ProductsPageState extends State<ProductsPage> {
                         setState(() {
                           _selectedCategory = value ?? '';
                         });
-                        _filterProducts();
+                        _filterProducts(products);
                       },
                     ),
                     const SizedBox(width: 16),
@@ -221,7 +223,7 @@ class _ProductsPageState extends State<ProductsPage> {
                         setState(() {
                           _sortBy = value ?? 'name';
                         });
-                        _filterProducts();
+                        _filterProducts(products);
                       },
                     ),
                   ],
@@ -230,7 +232,7 @@ class _ProductsPageState extends State<ProductsPage> {
 
               // Products Grid
               Expanded(
-                child: products.isEmpty
+                child: _filteredProducts.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -254,98 +256,121 @@ class _ProductsPageState extends State<ProductsPage> {
                     : GridView.builder(
                         padding: const EdgeInsets.all(8),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.75,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
+                          crossAxisCount: 1,
+                          childAspectRatio: 1.2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
                         ),
-                        itemCount: products.length,
-                        itemBuilder: (ctx, i) {
-                          final product = products[i];
+                        itemCount: _filteredProducts.length,
+                        itemBuilder: (context, index) {
+                          final product = _filteredProducts[index];
                           return Card(
                             clipBehavior: Clip.antiAlias,
                             elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             child: InkWell(
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ProductDetailsPage(
-                                      product: product,
-                                    ),
+                                    builder: (context) => ProductDetailsPage(product: product),
                                   ),
                                 );
                               },
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Stack(
-                                      children: [
-                                        ProductImage(
-                                          imageUrl: product.imageUrl,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                        ),
-                                        if (product.hasDiscount)
-                                          Positioned(
-                                            top: 8,
-                                            right: 8,
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 4,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.red,
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              child: Text(
-                                                '${(((product.originalPrice! - product.price) / product.originalPrice!) * 100).toInt()}%',
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
+                                  SizedBox(
+                                    height: 180,
+                                    child: Hero(
+                                      tag: 'product_${product.id}',
+                                      child: ProductImage(
+                                        imageUrl: product.imageUrl,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      ),
                                     ),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          product.name,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          PriceFormatter.format(product.price),
-                                          style: const TextStyle(
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        if (product.hasDiscount) ...[
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            PriceFormatter.format(product.originalPrice!),
-                                            style: const TextStyle(
-                                              decoration: TextDecoration.lineThrough,
-                                              color: Colors.grey,
-                                              fontSize: 12,
+                                  Expanded(
+                                    child: SingleChildScrollView(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              product.name,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                          ),
-                                        ],
-                                      ],
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    if (product.originalPrice != null)
+                                                      Text(
+                                                        PriceFormatter.format(product.originalPrice!),
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          decoration: TextDecoration.lineThrough,
+                                                          color: Colors.grey[600],
+                                                        ),
+                                                        textDirection: TextDirection.ltr,
+                                                      ),
+                                                    Text(
+                                                      PriceFormatter.format(product.price),
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Theme.of(context).primaryColor,
+                                                      ),
+                                                      textDirection: TextDirection.ltr,
+                                                    ),
+                                                  ],
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(Icons.add_shopping_cart),
+                                                  onPressed: () async {
+                                                    final success = await Provider.of<CartProvider>(
+                                                      context,
+                                                      listen: false,
+                                                    ).addItem(product, context);
+                                                    
+                                                    if (success && context.mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(
+                                                          content: const Text('محصول به سبد خرید اضافه شد'),
+                                                          duration: const Duration(seconds: 2),
+                                                          action: SnackBarAction(
+                                                            label: 'مشاهده سبد خرید',
+                                                            onPressed: () {
+                                                              Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder: (context) => const CartPage(),
+                                                                ),
+                                                              );
+                                                            },
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
