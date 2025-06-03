@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
 import '../../services/product_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/price_formatter.dart';
 
 class ProductManagementScreen extends StatefulWidget {
   const ProductManagementScreen({super.key});
@@ -71,7 +72,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                       ),
                       title: Text(product.name),
                       subtitle: Text(
-                        'قیمت: ${product.price.toStringAsFixed(0)} تومان\n'
+                        'قیمت: ${PriceFormatter.format(product.price)}\n'
                         'موجودی: ${product.stockQuantity} عدد',
                       ),
                       trailing: Row(
@@ -125,7 +126,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               ),
               TextField(
                 controller: priceController,
-                decoration: const InputDecoration(labelText: 'قیمت (تومان)'),
+                decoration: const InputDecoration(labelText: 'قیمت'),
                 keyboardType: TextInputType.number,
               ),
               TextField(

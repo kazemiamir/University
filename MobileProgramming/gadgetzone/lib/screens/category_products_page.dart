@@ -8,6 +8,7 @@ import 'product_details_page.dart';
 import 'cart_page.dart';
 import '../providers/cart_provider.dart';
 import '../data/dummy_categories.dart';
+import '../utils/price_formatter.dart';
 
 class CategoryProductsPage extends StatefulWidget {
   final String category;
@@ -23,6 +24,9 @@ class CategoryProductsPage extends StatefulWidget {
 
 class _CategoryProductsPageState extends State<CategoryProductsPage> {
   Category? _categoryModel;
+  List<Product> _products = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -31,10 +35,29 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
       (cat) => cat.name == widget.category,
       orElse: () => dummyCategories.first,
     );
-    // Load category products when the page is created
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductProvider>().getProductsByCategory(widget.category);
-    });
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final products = await Provider.of<ProductProvider>(context, listen: false)
+          .getProductsByCategory(widget.category);
+
+      setState(() {
+        _products = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -90,178 +113,147 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
           ),
         ],
       ),
-      body: Consumer<ProductProvider>(
-        builder: (context, productProvider, child) {
-          if (productProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (productProvider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(productProvider.error!),
-                  ElevatedButton(
-                    onPressed: () => productProvider.getProductsByCategory(widget.category),
-                    child: const Text('تلاش مجدد'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return FutureBuilder<List<Product>>(
-            future: productProvider.getProductsByCategory(widget.category),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (snapshot.hasError) {
-                return Center(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('خطا در دریافت محصولات: ${snapshot.error}'),
+                      Text(_error!),
                       ElevatedButton(
-                        onPressed: () => setState(() {}),
+                        onPressed: _loadProducts,
                         child: const Text('تلاش مجدد'),
                       ),
                     ],
                   ),
-                );
-              }
-
-              final products = snapshot.data ?? [];
-
-              if (products.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _categoryModel?.icon ?? Icons.category,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'محصولی در این دسته‌بندی وجود ندارد',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return GridView.builder(
-                padding: const EdgeInsets.all(8),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.7,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                ),
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  final product = products[index];
-                  return Card(
-                    clipBehavior: Clip.antiAlias,
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProductDetailsPage(product: product),
-                          ),
-                        );
-                      },
+                )
+              : _products.isEmpty
+                  ? Center(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Expanded(
-                            child: Stack(
-                              children: [
-                                Image.network(
-                                  product.imageUrl,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                                if (product.hasDiscount)
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        '${(((product.originalPrice! - product.price) / product.originalPrice!) * 100).toInt()}%',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
+                          Icon(
+                            _categoryModel?.icon ?? Icons.category,
+                            size: 64,
+                            color: Colors.grey[400],
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  product.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${product.price.toStringAsFixed(2)} تومان',
-                                  style: const TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (product.hasDiscount) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${product.originalPrice!.toStringAsFixed(2)} تومان',
-                                    style: const TextStyle(
-                                      decoration: TextDecoration.lineThrough,
-                                      color: Colors.grey,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ],
+                          const SizedBox(height: 16),
+                          Text(
+                            'محصولی در این دسته‌بندی وجود ندارد',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
                             ),
                           ),
                         ],
                       ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadProducts,
+                      child: GridView.builder(
+                        padding: const EdgeInsets.all(8),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.7,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                        ),
+                        itemCount: _products.length,
+                        itemBuilder: (context, index) {
+                          final product = _products[index];
+                          return Card(
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProductDetailsPage(product: product),
+                                  ),
+                                );
+                              },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Stack(
+                                      children: [
+                                        Image.network(
+                                          product.imageUrl,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                        ),
+                                        if (product.hasDiscount)
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red,
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                '${(((product.originalPrice! - product.price) / product.originalPrice!) * 100).toInt()}%',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          product.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          PriceFormatter.format(product.price),
+                                          style: const TextStyle(
+                                            color: Colors.green,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textDirection: TextDirection.ltr,
+                                        ),
+                                        if (product.hasDiscount) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            PriceFormatter.format(product.originalPrice!),
+                                            style: const TextStyle(
+                                              decoration: TextDecoration.lineThrough,
+                                              color: Colors.grey,
+                                              fontSize: 12,
+                                            ),
+                                            textDirection: TextDirection.ltr,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  );
-                },
-              );
-            },
-          );
-        },
-      ),
     );
   }
 } 

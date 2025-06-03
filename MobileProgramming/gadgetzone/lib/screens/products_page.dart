@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/product_provider.dart';
 import '../widgets/product_image.dart';
+import '../utils/price_formatter.dart';
 
 class ProductsPage extends StatefulWidget {
   const ProductsPage({super.key});
@@ -327,7 +328,7 @@ class _ProductsPageState extends State<ProductsPage> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          '${product.price.toStringAsFixed(2)} تومان',
+                                          PriceFormatter.format(product.price),
                                           style: const TextStyle(
                                             color: Colors.green,
                                             fontWeight: FontWeight.bold,
@@ -336,7 +337,7 @@ class _ProductsPageState extends State<ProductsPage> {
                                         if (product.hasDiscount) ...[
                                           const SizedBox(height: 4),
                                           Text(
-                                            '${product.originalPrice!.toStringAsFixed(2)} تومان',
+                                            PriceFormatter.format(product.originalPrice!),
                                             style: const TextStyle(
                                               decoration: TextDecoration.lineThrough,
                                               color: Colors.grey,

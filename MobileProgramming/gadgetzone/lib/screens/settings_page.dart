@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/settings_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -10,13 +12,10 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _notificationsEnabled = true;
-  String _selectedLanguage = 'فارسی';
-
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer2<ThemeProvider, SettingsProvider>(
+      builder: (context, themeProvider, settingsProvider, child) {
         return Scaffold(
           appBar: AppBar(
             title: const Text('تنظیمات'),
@@ -45,7 +44,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ListTile(
                 title: const Text('تم برنامه'),
                 subtitle: Text(themeProvider.themeMode),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                leading: const Icon(Icons.arrow_back_ios, size: 16),
                 onTap: () {
                   showDialog(
                     context: context,
@@ -89,59 +88,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const Divider(),
 
-              // تنظیمات زبان
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'تنظیمات زبان',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              ListTile(
-                title: const Text('زبان برنامه'),
-                subtitle: Text(_selectedLanguage),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('انتخاب زبان'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          RadioListTile(
-                            title: const Text('فارسی'),
-                            value: 'فارسی',
-                            groupValue: _selectedLanguage,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedLanguage = value.toString();
-                              });
-                              Navigator.pop(context);
-                            },
-                          ),
-                          RadioListTile(
-                            title: const Text('English'),
-                            value: 'English',
-                            groupValue: _selectedLanguage,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedLanguage = value.toString();
-                              });
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const Divider(),
-
               // تنظیمات اعلان‌ها
               const Padding(
                 padding: EdgeInsets.all(16),
@@ -156,17 +102,9 @@ class _SettingsPageState extends State<SettingsPage> {
               SwitchListTile(
                 title: const Text('اعلان‌ها'),
                 subtitle: const Text('دریافت اعلان‌های پیشنهادات ویژه و تخفیف‌ها'),
-                value: _notificationsEnabled,
+                value: settingsProvider.notificationsEnabled,
                 onChanged: (value) {
-                  setState(() {
-                    _notificationsEnabled = value;
-                  });
-                  // TODO: فعال/غیرفعال کردن اعلان‌ها
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('این قابلیت به زودی اضافه خواهد شد'),
-                    ),
-                  );
+                  settingsProvider.toggleNotifications(value);
                 },
               ),
               const Divider(),
@@ -188,24 +126,86 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               ListTile(
                 title: const Text('شرایط و قوانین'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                leading: const Icon(Icons.arrow_back_ios, size: 16),
                 onTap: () {
-                  // TODO: نمایش شرایط و قوانین
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('این قابلیت به زودی اضافه خواهد شد'),
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('شرایط و قوانین'),
+                      content: const SingleChildScrollView(
+                        child: Text(
+                          '''
+1. کلیات
+- این برنامه صرفاً جهت خرید و فروش محصولات الکترونیکی می‌باشد.
+- کلیه حقوق مادی و معنوی این برنامه متعلق به گجت زون می‌باشد.
+
+2. حریم خصوصی
+- اطلاعات شخصی کاربران محرمانه بوده و به هیچ عنوان در اختیار اشخاص ثالث قرار نمی‌گیرد.
+- کاربران موظف به حفظ و نگهداری از اطلاعات حساب کاربری خود می‌باشند.
+
+3. خرید و فروش
+- قیمت‌های درج شده شامل مالیات بر ارزش افزوده می‌باشد.
+- هزینه ارسال بر عهده خریدار است.
+- امکان مرجوع کالا تا 7 روز پس از خرید وجود دارد.
+
+4. گارانتی و خدمات پس از فروش
+- کلیه محصولات دارای گارانتی معتبر می‌باشند.
+- خدمات پس از فروش به مدت یک سال ارائه می‌گردد.
+''',
+                          style: TextStyle(height: 1.5),
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('تایید'),
+                        ),
+                      ],
                     ),
                   );
                 },
               ),
               ListTile(
                 title: const Text('حریم خصوصی'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                leading: const Icon(Icons.arrow_back_ios, size: 16),
                 onTap: () {
-                  // TODO: نمایش حریم خصوصی
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('این قابلیت به زودی اضافه خواهد شد'),
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('حریم خصوصی'),
+                      content: const SingleChildScrollView(
+                        child: Text(
+                          '''
+1. جمع‌آوری اطلاعات
+- نام و نام خانوادگی
+- شماره تماس
+- آدرس ایمیل
+- آدرس محل سکونت
+
+2. استفاده از اطلاعات
+- ارائه خدمات بهتر به کاربران
+- ارسال محصولات خریداری شده
+- اطلاع‌رسانی درباره تخفیف‌ها و پیشنهادات ویژه
+
+3. حفاظت از اطلاعات
+- استفاده از پروتکل‌های امنیتی پیشرفته
+- رمزنگاری اطلاعات حساس
+- عدم به اشتراک‌گذاری با اشخاص ثالث
+
+4. حقوق کاربران
+- دسترسی به اطلاعات شخصی
+- اصلاح اطلاعات نادرست
+- حذف حساب کاربری
+''',
+                          style: TextStyle(height: 1.5),
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('تایید'),
+                        ),
+                      ],
                     ),
                   );
                 },

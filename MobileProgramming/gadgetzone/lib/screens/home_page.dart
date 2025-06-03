@@ -15,6 +15,7 @@ import 'admin/admin_login_screen.dart';
 import '../widgets/app_drawer.dart';
 import 'profile_page.dart';
 import '../widgets/product_image.dart';
+import '../utils/price_formatter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -394,21 +395,22 @@ class _HomePageState extends State<HomePage> {
                                         children: [
                                           if (product.originalPrice != null)
                                             Text(
-                                              '${product.originalPrice?.toStringAsFixed(0)} تومان',
+                                              PriceFormatter.format(product.originalPrice!),
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                decoration:
-                                                    TextDecoration.lineThrough,
+                                                decoration: TextDecoration.lineThrough,
                                                 color: Colors.grey[600],
                                               ),
+                                              textDirection: TextDirection.ltr,
                                             ),
                                           Text(
-                                            '${product.price.toStringAsFixed(0)} تومان',
+                                            PriceFormatter.format(product.price),
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                               color: Theme.of(context).primaryColor,
                                             ),
+                                            textDirection: TextDirection.ltr,
                                           ),
                                         ],
                                       ),
@@ -514,13 +516,14 @@ class ProductCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                  Text(
-                        '${product.price.toStringAsFixed(0)} تومان',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                      Text(
+                        PriceFormatter.format(product.price),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textDirection: TextDirection.ltr,
                       ),
                       IconButton(
                         icon: const Icon(Icons.add_shopping_cart),

@@ -7,6 +7,7 @@ import '../providers/cart_provider.dart';
 import '../screens/profile_page.dart';
 import '../screens/settings_page.dart';
 import '../screens/help_page.dart';
+import '../screens/developers_page.dart';
 import 'app_logo.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -151,6 +152,19 @@ class AppDrawer extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const HelpPage(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.code),
+            title: const Text('سازندگان'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DevelopersPage(),
                 ),
               );
             },

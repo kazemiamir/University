@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import 'cart_page.dart';
 import '../widgets/product_image.dart';
+import '../utils/price_formatter.dart';
 
 class ProductDetailsPage extends StatelessWidget {
   final Product product;
@@ -86,7 +87,7 @@ class ProductDetailsPage extends StatelessWidget {
                         children: [
                           if (product.hasDiscount)
                             Text(
-                              '\$${product.originalPrice?.toStringAsFixed(2)}',
+                              PriceFormatter.format(product.originalPrice!),
                               style: TextStyle(
                                 fontSize: 16,
                                 decoration: TextDecoration.lineThrough,
@@ -94,7 +95,7 @@ class ProductDetailsPage extends StatelessWidget {
                               ),
                             ),
                           Text(
-                            '\$${product.price.toStringAsFixed(2)}',
+                            PriceFormatter.format(product.price),
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -154,7 +155,7 @@ class ProductDetailsPage extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Expanded(
-        child: Text(
+                              child: Text(
                                 spec.value,
                                 style: TextStyle(
                                   fontSize: 16,
