@@ -5,24 +5,32 @@ import 'screens/auth/login_screen.dart';
 import 'services/supabase_config.dart';
 import 'dart:io' show Platform;
 import 'providers/cart_provider.dart';
+import 'providers/product_provider.dart';
 import 'screens/home_page.dart';
 import 'screens/main_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'providers/theme_provider.dart';
+import 'services/user_service.dart';
+import 'providers/auth_provider.dart';
+import 'services/database_service.dart';
+import 'app.dart';
+import 'services/user_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  print('\n=== اطلاعات سیستم ===');
+  print('سیستم عامل: ${Platform.operatingSystem}');
+  print('نسخه سیستم عامل: ${Platform.operatingSystemVersion}');
+  print('تعداد تلاش‌های مجدد: 3');
+  print('فاصله بین تلاش‌ها: 5 ثانیه');
+  print('=====================\n');
+
   bool isConnected = false;
   int retryCount = 0;
   const maxRetries = 3;
   const retryDelay = Duration(seconds: 5);
-
-  print('\n=== اطلاعات سیستم ===');
-  print('سیستم عامل: ${Platform.operatingSystem}');
-  print('نسخه سیستم عامل: ${Platform.operatingSystemVersion}');
-  print('تعداد تلاش‌های مجدد: $maxRetries');
-  print('فاصله بین تلاش‌ها: ${retryDelay.inSeconds} ثانیه');
-  print('=====================\n');
 
   while (!isConnected && retryCount < maxRetries) {
     try {
@@ -32,16 +40,17 @@ void main() async {
         await Future.delayed(retryDelay);
       }
 
-      print('شروع مقداردهی اولیه Supabase...');
-      await SupabaseConfig.initialize();
-      
       print('تست اتصال...');
-      isConnected = await SupabaseConfig.checkConnection();
+      await Supabase.initialize(
+        url: 'https://djsjjgkwffqhlrtrdwda.supabase.co',
+        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqc2pqZ2t3ZmZxaGxydHJkd2RhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3NTQ4OTgsImV4cCI6MjA2MzMzMDg5OH0.uIJ-T8gd5Rs4v-2O2MD5AmIcsmGCQvIFoZPStyevAC8',
+      );
       
-      if (!isConnected) {
-        throw Exception('تست اتصال ناموفق بود');
-      }
+      // Initialize user manager and database
+      await UserManager.initialize();
+      await DatabaseService.initializeDatabase();
       
+      isConnected = true;
       print('اتصال با موفقیت برقرار شد');
       break;
 
@@ -63,7 +72,7 @@ void main() async {
     }
   }
   
-  runApp(const MyApp());
+  runApp(const App());
 }
 
 class MyApp extends StatelessWidget {
@@ -71,57 +80,32 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (ctx) => CartProvider(),
-      child: MaterialApp(
-        title: 'GadgetZone',
-        theme: ThemeData(
-          fontFamily: 'Vazir',
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-            selectedItemColor: Colors.purple,
-            unselectedItemColor: Colors.grey,
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purple,
-              foregroundColor: Colors.white,
-            ),
-          ),
-          textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.purple,
-            ),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.purple),
-            ),
-          ),
-          textTheme: const TextTheme(
-            bodyLarge: TextStyle(fontFamily: 'Vazir'),
-            bodyMedium: TextStyle(fontFamily: 'Vazir'),
-            titleLarge: TextStyle(fontFamily: 'Vazir'),
-            titleMedium: TextStyle(fontFamily: 'Vazir'),
-            titleSmall: TextStyle(fontFamily: 'Vazir'),
-          ),
-        ),
-        locale: const Locale('fa', 'IR'),
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('fa', 'IR'),
-        ],
-        home: const MainScreen(),
-        debugShowCheckedModeBanner: false,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'GadgetZone',
+            theme: themeProvider.theme,
+            locale: const Locale('fa', 'IR'),
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('fa', 'IR'),
+            ],
+            initialRoute: Routes.home,
+            routes: Routes.getRoutes(),
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }

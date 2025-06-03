@@ -4,7 +4,7 @@ import '../models/category_model.dart';
 final List<Category> dummyCategories = [
   Category(
     id: 'c1',
-    name: 'گوشی موبایل',
+    name: 'موبایل',
     icon: Icons.phone_android,
     color: Colors.blue,
     description: 'انواع گوشی‌های هوشمند',

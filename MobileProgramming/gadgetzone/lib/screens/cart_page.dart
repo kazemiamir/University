@@ -171,7 +171,7 @@ class CartPage extends StatelessWidget {
                                   onPressed: () {
                                     Provider.of<CartProvider>(context,
                                             listen: false)
-                                        .addItem(cartItem.product);
+                                        .addItem(cartItem.product, context);
                                   },
                                 ),
                               ],

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../data/dummy_products.dart';
 import '../models/product_model.dart';
 import '../models/banner_model.dart';
 import '../models/category_model.dart';
@@ -7,10 +6,15 @@ import '../models/special_offer_model.dart';
 import 'product_details_page.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/product_provider.dart';
 import 'cart_page.dart';
 import '../data/dummy_categories.dart';
 import 'category_products_page.dart';
 import 'products_page.dart';
+import 'admin/admin_login_screen.dart';
+import '../widgets/app_drawer.dart';
+import 'profile_page.dart';
+import '../widgets/product_image.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -31,11 +35,16 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _startAutoScroll();
+    // Load products when the page is created
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductProvider>().loadAllProducts();
+      context.read<ProductProvider>().loadFeaturedProducts();
+    });
   }
 
   void _startAutoScroll() {
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
+      if (mounted && _pageController.hasClients) {
         final nextPage = (_currentBannerIndex + 1) % _banners.length;
         _pageController.animateToPage(
           nextPage,
@@ -74,11 +83,36 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredProducts = dummyProducts
+    final productProvider = Provider.of<ProductProvider>(context);
+    
+    final filteredProducts = productProvider.products
         .where((product) =>
             product.name.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
-    final featuredProducts = dummyProducts.where((p) => p.isFeatured).toList();
+    
+    final featuredProducts = productProvider.featuredProducts;
+
+    if (productProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (productProvider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(productProvider.error!),
+            ElevatedButton(
+              onPressed: () {
+                productProvider.loadAllProducts();
+                productProvider.loadFeaturedProducts();
+              },
+              child: const Text('تلاش مجدد'),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       key: _scaffoldKey,
@@ -96,112 +130,17 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              // TODO: نمایش صفحه پروفایل
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('این قابلیت به زودی اضافه خواهد شد'),
-                  duration: Duration(seconds: 2),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProfilePage(),
                 ),
               );
             },
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.inversePrimary,
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    'گجت زون',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'فروشگاه آنلاین گجت و لوازم جانبی',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('صفحه اصلی'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.category),
-              title: const Text('دسته‌بندی‌ها'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: نمایش صفحه دسته‌بندی‌ها
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.shopping_cart),
-              title: const Text('سبد خرید'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CartPage(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('پروفایل'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: نمایش صفحه پروفایل
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('تنظیمات'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: نمایش صفحه تنظیمات
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.help),
-              title: const Text('راهنما'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: نمایش صفحه راهنما
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('درباره ما'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: نمایش صفحه درباره ما
-              },
-            ),
-          ],
-        ),
-      ),
+      drawer: const AppDrawer(),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +156,7 @@ class _HomePageState extends State<HomePage> {
                   });
                 },
                 itemCount: _banners.length,
-                itemBuilder: (context, index) {
+          itemBuilder: (context, index) {
                   final banner = _banners[index];
                   return Container(
                     margin: const EdgeInsets.all(8),
@@ -335,7 +274,7 @@ class _HomePageState extends State<HomePage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => CategoryProductsPage(
-                              category: category,
+                              category: category.name,
                             ),
                           ),
                         );
@@ -423,8 +362,8 @@ class _HomePageState extends State<HomePage> {
                             Expanded(
                               child: Hero(
                                 tag: 'product_${product.id}',
-                                child: Image.network(
-                                  product.imageUrl,
+                                child: ProductImage(
+                                  imageUrl: product.imageUrl,
                                   fit: BoxFit.cover,
                                   width: double.infinity,
                                 ),
@@ -455,7 +394,7 @@ class _HomePageState extends State<HomePage> {
                                         children: [
                                           if (product.originalPrice != null)
                                             Text(
-                                              '\$${product.originalPrice?.toStringAsFixed(2)}',
+                                              '${product.originalPrice?.toStringAsFixed(0)} تومان',
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 decoration:
@@ -464,7 +403,7 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                             ),
                                           Text(
-                                            '\$${product.price.toStringAsFixed(2)}',
+                                            '${product.price.toStringAsFixed(0)} تومان',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
@@ -475,31 +414,31 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                       IconButton(
                                         icon: const Icon(Icons.add_shopping_cart),
-                                        onPressed: () {
-                                          Provider.of<CartProvider>(context,
-                                                  listen: false)
-                                              .addItem(product);
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: const Text(
-                                                  'محصول به سبد خرید اضافه شد'),
-                                              duration:
-                                                  const Duration(seconds: 2),
-                                              action: SnackBarAction(
-                                                label: 'مشاهده سبد خرید',
-                                                onPressed: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const CartPage(),
-                                                    ),
-                                                  );
-                                                },
+                                        onPressed: () async {
+                                          final success = await Provider.of<CartProvider>(
+                                            context,
+                                            listen: false,
+                                          ).addItem(product, context);
+                                          
+                                          if (success && context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: const Text('محصول به سبد خرید اضافه شد'),
+                                                duration: const Duration(seconds: 2),
+                                                action: SnackBarAction(
+                                                  label: 'مشاهده سبد خرید',
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) => const CartPage(),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
                                               ),
-                                            ),
-                                          );
+                                            );
+                                          }
                                         },
                                       ),
                                     ],
@@ -550,19 +489,10 @@ class ProductCard extends StatelessWidget {
             Expanded(
               child: Hero(
                 tag: 'product_${product.id}',
-                child: Image.network(
-                  product.imageUrl,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(
-                        Icons.error_outline,
-                        size: 40,
-                        color: Colors.red,
-                      ),
-                    );
-                  },
+                child: ProductImage(
+                  imageUrl: product.imageUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
                 ),
               ),
             ),
@@ -581,13 +511,47 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
                   Text(
-                    '\$${product.price.toStringAsFixed(2)}',
+                        '${product.price.toStringAsFixed(0)} تومان',
                     style: TextStyle(
                       fontSize: 14,
                       color: Theme.of(context).primaryColor,
                       fontWeight: FontWeight.bold,
                     ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_shopping_cart),
+                        onPressed: () async {
+                          final success = await Provider.of<CartProvider>(
+                            context,
+                            listen: false,
+                          ).addItem(product, context);
+                          
+                          if (success && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('محصول به سبد خرید اضافه شد'),
+                                duration: const Duration(seconds: 2),
+                                action: SnackBarAction(
+                                  label: 'مشاهده سبد خرید',
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const CartPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

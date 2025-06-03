@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/cart_item_model.dart';
 import '../models/product_model.dart';
+import 'auth_provider.dart';
 
 class CartProvider with ChangeNotifier {
   final Map<String, CartItem> _items = {};
@@ -17,7 +20,15 @@ class CartProvider with ChangeNotifier {
     return _items.values.fold(0.0, (sum, item) => sum + (item.savedAmount ?? 0));
   }
 
-  void addItem(Product product) {
+  Future<bool> addItem(Product product, BuildContext context) async {
+    // چک کردن وضعیت لاگین
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isAuthenticated = await authProvider.checkAuthAndShowDialog(context);
+    
+    if (!isAuthenticated) {
+      return false;
+    }
+
     if (_items.containsKey(product.id)) {
       _items.update(
         product.id,
@@ -33,6 +44,7 @@ class CartProvider with ChangeNotifier {
       );
     }
     notifyListeners();
+    return true;
   }
 
   void removeItem(String productId) {

@@ -12,7 +12,7 @@ class CartItem {
   double get totalPrice => product.price * quantity;
   
   double? get savedAmount {
-    if (product.originalPrice != null) {
+    if (product.hasDiscount) {
       return (product.originalPrice! - product.price) * quantity;
     }
     return null;

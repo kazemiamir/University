@@ -3,6 +3,7 @@ import '../models/product_model.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import 'cart_page.dart';
+import '../widgets/product_image.dart';
 
 class ProductDetailsPage extends StatelessWidget {
   final Product product;
@@ -51,18 +52,11 @@ class ProductDetailsPage extends StatelessWidget {
               ),
               child: Hero(
                 tag: 'product_${product.id}',
-                child: Image.network(
-                  product.imageUrl,
+                child: ProductImage(
+                  imageUrl: product.imageUrl,
                   fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(
-                        Icons.error_outline,
-                        size: 50,
-                        color: Colors.red,
-                      ),
-                    );
-                  },
+                  width: double.infinity,
+                  height: double.infinity,
                 ),
               ),
             ),
@@ -90,7 +84,7 @@ class ProductDetailsPage extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          if (product.originalPrice != null)
+                          if (product.hasDiscount)
                             Text(
                               '\$${product.originalPrice?.toStringAsFixed(2)}',
                               style: TextStyle(
@@ -160,7 +154,7 @@ class ProductDetailsPage extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text(
+        child: Text(
                                 spec.value,
                                 style: TextStyle(
                                   fontSize: 16,
@@ -195,26 +189,29 @@ class ProductDetailsPage extends StatelessWidget {
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  Provider.of<CartProvider>(context, listen: false)
-                      .addItem(product);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('محصول به سبد خرید اضافه شد'),
-                      duration: const Duration(seconds: 2),
-                      action: SnackBarAction(
-                        label: 'مشاهده سبد خرید',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const CartPage(),
-                            ),
-                          );
-                        },
+                onPressed: () async {
+                  final success = await Provider.of<CartProvider>(context, listen: false)
+                      .addItem(product, context);
+                  
+                  if (success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('محصول به سبد خرید اضافه شد'),
+                        duration: const Duration(seconds: 2),
+                        action: SnackBarAction(
+                          label: 'مشاهده سبد خرید',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CartPage(),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),

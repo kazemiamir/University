@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'products_page.dart';
 import 'cart_page.dart';
+import 'profile_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -17,6 +18,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomePage(),
     const ProductsPage(),
     const CartPage(),
+    const ProfilePage(),
   ];
 
   @override
@@ -30,6 +32,7 @@ class _MainScreenState extends State<MainScreen> {
             _selectedIndex = index;
           });
         },
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -42,6 +45,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
             label: 'سبد خرید',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'پروفایل',
           ),
         ],
       ),
