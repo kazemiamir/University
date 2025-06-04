@@ -4,14 +4,14 @@ import '../models/category_model.dart';
 final List<Category> dummyCategories = [
   Category(
     id: 'c1',
-    name: 'موبایل',
+    name: 'گوشی موبایل',
     icon: Icons.phone_android,
     color: Colors.blue,
     description: 'انواع گوشی‌های هوشمند',
   ),
   Category(
     id: 'c2',
-    name: 'لپ‌تاپ',
+    name: 'لپ تاپ',
     icon: Icons.laptop,
     color: Colors.purple,
     description: 'لپ‌تاپ‌های حرفه‌ای و گیمینگ',
@@ -32,9 +32,9 @@ final List<Category> dummyCategories = [
   ),
   Category(
     id: 'c5',
-    name: 'لوازم جانبی',
+    name: 'هدفون و هندزفری',
     icon: Icons.headphones,
     color: Colors.red,
-    description: 'هدفون، شارژر و سایر لوازم جانبی',
+    description: 'هدفون، هندزفری و لوازم جانبی صوتی',
   ),
 ]; 

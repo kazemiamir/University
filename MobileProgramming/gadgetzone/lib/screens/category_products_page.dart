@@ -9,6 +9,7 @@ import 'cart_page.dart';
 import '../providers/cart_provider.dart';
 import '../data/dummy_categories.dart';
 import '../utils/price_formatter.dart';
+import '../widgets/product_image.dart';
 
 class CategoryProductsPage extends StatefulWidget {
   final String category;
@@ -184,8 +185,8 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
                                     height: 180,
                                     child: Hero(
                                       tag: 'product_${product.id}',
-                                      child: Image.network(
-                                        product.imageUrl,
+                                      child: ProductImage(
+                                        imageUrl: product.imageUrl,
                                         fit: BoxFit.cover,
                                         width: double.infinity,
                                       ),
@@ -234,6 +235,15 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
                                                       textDirection: TextDirection.ltr,
                                                     ),
                                                   ],
+                                                ),
+                                                Text(
+                                                  'موجودی: ${product.stockQuantity} عدد',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: product.stockQuantity > 0 
+                                                      ? Colors.green[700]
+                                                      : Colors.red[700],
+                                                  ),
                                                 ),
                                                 IconButton(
                                                   icon: const Icon(Icons.add_shopping_cart),

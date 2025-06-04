@@ -15,7 +15,7 @@ class UserManager {
     // Try to load user data if phone exists
     final savedPhone = _prefs?.getString(_phoneKey);
     if (savedPhone != null) {
-      _currentUser = await getUser();
+      _currentUser = await getCurrentUser();
     }
   }
 
@@ -54,13 +54,13 @@ class UserManager {
   }
 
   // دریافت اطلاعات کاربر
-  static Future<Map<String, dynamic>?> getUser() async {
+  static Future<Map<String, dynamic>?> getCurrentUser() async {
     if (_currentUser != null) return _currentUser;
-    
-    try {
-      final savedPhone = _prefs?.getString(_phoneKey);
-      if (savedPhone == null) return null;
 
+    final savedPhone = _prefs?.getString(_phoneKey);
+    if (savedPhone == null) return null;
+
+    try {
       final response = await _supabase
           .from('users')
           .select()
@@ -73,8 +73,7 @@ class UserManager {
       }
       return null;
     } catch (e) {
-      print('Error getting user: $e');
-      return null;
+      throw Exception('خطا در دریافت اطلاعات کاربر: $e');
     }
   }
 
@@ -96,8 +95,7 @@ class UserManager {
       if (user == null) return false;
       return user['password'] == password;
     } catch (e) {
-      print('Error validating password: $e');
-      return false;
+      throw Exception('خطا در تایید رمز عبور: $e');
     }
   }
 
@@ -112,8 +110,7 @@ class UserManager {
       
       return response != null;
     } catch (e) {
-      print('Error checking phone number: $e');
-      return false;
+      throw Exception('خطا در بررسی شماره موبایل: $e');
     }
   }
 
@@ -123,9 +120,6 @@ class UserManager {
     required String password,
   }) async {
     try {
-      print('Attempting login for phone: $phone');
-      
-      // اول چک می‌کنیم کاربر با این شماره وجود داره یا نه
       final user = await _supabase
           .from('users')
           .select()
@@ -133,24 +127,18 @@ class UserManager {
           .maybeSingle();
       
       if (user == null) {
-        print('No user found with phone: $phone');
         throw 'کاربری با این شماره موبایل یافت نشد';
       }
 
-      // حالا رمز عبور رو چک می‌کنیم
       if (user['password'] != password) {
-        print('Invalid password for phone: $phone');
         throw 'رمز عبور اشتباه است';
       }
 
-      // اگر همه چیز درست بود، اطلاعات کاربر رو ذخیره می‌کنیم
       _currentUser = user;
       await _prefs?.setString(_phoneKey, phone);
-      print('Login successful for phone: $phone');
       return true;
 
     } catch (e) {
-      print('Error in login: $e');
       if (e is String) {
         throw e;
       }

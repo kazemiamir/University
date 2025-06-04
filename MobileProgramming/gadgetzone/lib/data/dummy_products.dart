@@ -7,7 +7,7 @@ final List<Product> dummyProducts = [
     description: 'جدیدترین گوشی اپل با دوربین سه‌گانه و صفحه نمایش Super Retina XDR',
     price: 1299.99,
     originalPrice: 1499.99,
-    imageUrl: 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=400',
+    imageUrl: 'https://picsum.photos/400/400?random=1',
     category: 'موبایل',
     isFeatured: true,
     specifications: {
@@ -25,7 +25,7 @@ final List<Product> dummyProducts = [
     description: 'پرچمدار سامسونگ با دوربین 108 مگاپیکسلی',
     price: 1199.99,
     originalPrice: 1399.99,
-    imageUrl: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400',
+    imageUrl: 'https://picsum.photos/400/400?random=2',
     category: 'موبایل',
     isFeatured: true,
     specifications: {
@@ -43,7 +43,7 @@ final List<Product> dummyProducts = [
     description: 'هدفون بی‌سیم اپل با حذف نویز فعال',
     price: 249.99,
     originalPrice: 279.99,
-    imageUrl: 'https://images.unsplash.com/photo-1588423771073-b8903fbb85b5?w=400',
+    imageUrl: 'https://picsum.photos/400/400?random=3',
     category: 'لوازم جانبی',
     isFeatured: false,
     specifications: {
@@ -61,7 +61,7 @@ final List<Product> dummyProducts = [
     description: 'ساعت هوشمند اپل با صفحه نمایش بزرگتر',
     price: 399.99,
     originalPrice: 429.99,
-    imageUrl: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=400',
+    imageUrl: 'https://picsum.photos/400/400?random=4',
     category: 'لوازم جانبی',
     isFeatured: true,
     specifications: {
@@ -79,7 +79,7 @@ final List<Product> dummyProducts = [
     description: 'دستبند هوشمند با نمایشگر AMOLED',
     price: 44.99,
     originalPrice: 49.99,
-    imageUrl: 'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=400',
+    imageUrl: 'https://picsum.photos/400/400?random=5',
     category: 'لوازم جانبی',
     isFeatured: false,
     specifications: {

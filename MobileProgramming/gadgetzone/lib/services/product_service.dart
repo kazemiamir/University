@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/product_model.dart';
 import '../services/supabase_config.dart';
+import '../data/dummy_categories.dart';
 
 class ProductService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -8,58 +9,21 @@ class ProductService {
 
   Future<List<Product>> getAllProducts() async {
     try {
-      print('\n=== شروع دریافت محصولات ===');
-      print('جدول: $_table');
-      
-      // تست دسترسی به جدول
-      try {
-        final testResponse = await _supabase
-            .from(_table)
-            .select('count')
-            .single();
-        print('✅ دسترسی به جدول برقرار است');
-        print('تعداد رکوردها: ${testResponse['count']}');
-      } catch (e) {
-        print('❌ خطا در دسترسی به جدول:');
-        print('نوع خطا: ${e.runtimeType}');
-        print('پیام خطا: $e');
-      }
-      
       final response = await _supabase
           .from(_table)
           .select()
           .order('created_at', ascending: false);
       
-      print('=== DEBUG: Raw Supabase Response ===');
-      print('Response type: ${response.runtimeType}');
-      print('Response data: $response');
-      
       if (response == null || (response as List).isEmpty) {
-        print('⚠️ هیچ محصولی یافت نشد');
         return [];
       }
 
-      final products = (response as List)
-          .map((product) {
-            try {
-              return Product.fromJson(product);
-            } catch (e) {
-              print('❌ خطا در تبدیل محصول: $e');
-              print('داده خام: $product');
-              rethrow;
-            }
-          })
+      return (response as List)
+          .map((product) => Product.fromJson(product))
           .toList();
-      
-      print('✅ ${products.length} محصول با موفقیت دریافت شد');
-      print('=================================');
-      
-      return products;
+          
     } catch (e) {
-      print('❌ خطا در دریافت محصولات:');
-      print('نوع خطا: ${e.runtimeType}');
-      print('پیام خطا: $e');
-      rethrow;
+      throw Exception('خطا در دریافت محصولات: $e');
     }
   }
 
@@ -83,18 +47,19 @@ class ProductService {
   Future<List<Product>> getProductsByCategory(String category) async {
     try {
       print('\n=== شروع دریافت محصولات دسته‌بندی ===');
-      print('دسته‌بندی درخواستی: $category');
+      print('🔍 دسته‌بندی درخواستی: $category');
       
       // اول همه محصولات را دریافت کنیم تا ببینیم چه دسته‌بندی‌هایی داریم
       final allProducts = await _supabase
           .from(_table)
           .select();
       
-      print('تعداد کل محصولات: ${allProducts.length}');
-      print('دسته‌بندی‌های موجود:');
+      print('📊 تعداد کل محصولات: ${allProducts.length}');
+      print('📑 دسته‌بندی‌های موجود در دیتابیس:');
       final categories = (allProducts as List).map((p) => p['category']).toSet();
-      categories.forEach((cat) => print('- $cat'));
+      categories.forEach((cat) => print('   - "$cat"'));
 
+      print('\n🔎 جستجوی محصولات با دسته‌بندی: "$category"');
       // حالا محصولات دسته‌بندی مورد نظر را دریافت کنیم
       final response = await _supabase
           .from(_table)
@@ -102,21 +67,36 @@ class ProductService {
           .eq('category', category)
           .order('created_at', ascending: false);
       
-      print('تعداد محصولات پیدا شده: ${response.length}');
+      print('📦 تعداد محصولات پیدا شده: ${response.length}');
+      
+      if (response.isEmpty) {
+        print('⚠️ هیچ محصولی در این دسته‌بندی یافت نشد!');
+        print('💡 پیشنهاد: بررسی کنید که نام دسته‌بندی دقیقاً مطابق با مقادیر موجود در دیتابیس باشد');
+        return [];
+      }
       
       final products = (response as List)
-          .map((product) => Product.fromJson(product))
+          .map((product) {
+            try {
+              return Product.fromJson(product);
+            } catch (e) {
+              print('❌ خطا در تبدیل داده محصول:');
+              print('   داده خام: $product');
+              print('   پیام خطا: $e');
+              rethrow;
+            }
+          })
           .toList();
       
-      print('محصولات این دسته‌بندی:');
-      products.forEach((p) => print('- ${p.name}'));
+      print('✅ محصولات این دسته‌بندی:');
+      products.forEach((p) => print('   - ${p.name}'));
       print('=================================\n');
       
       return products;
     } catch (e) {
       print('❌ خطا در دریافت محصولات دسته‌بندی:');
-      print('نوع خطا: ${e.runtimeType}');
-      print('پیام خطا: $e');
+      print('   نوع خطا: ${e.runtimeType}');
+      print('   پیام خطا: $e');
       rethrow;
     }
   }
@@ -184,5 +164,30 @@ class ProductService {
         .order('created_at', ascending: false);
     
     return (response as List).map((json) => Product.fromJson(json)).toList();
+  }
+
+  Future<void> checkCategoryMappings() async {
+    try {
+      final allProducts = await _supabase
+          .from(_table)
+          .select('category');
+      
+      final dbCategories = (allProducts as List)
+          .map((p) => p['category'] as String)
+          .toSet();
+      
+      final appCategories = dummyCategories
+          .map((c) => c.name)
+          .toSet();
+      
+      final missingInDb = appCategories.difference(dbCategories);
+      final missingInApp = dbCategories.difference(appCategories);
+      
+      if (missingInDb.isNotEmpty || missingInApp.isNotEmpty) {
+        throw Exception('عدم تطابق در دسته‌بندی‌ها');
+      }
+    } catch (e) {
+      throw Exception('خطا در بررسی دسته‌بندی‌ها: $e');
+    }
   }
 } 

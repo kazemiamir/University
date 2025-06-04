@@ -19,13 +19,6 @@ import 'services/user_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  print('\n=== اطلاعات سیستم ===');
-  print('سیستم عامل: ${Platform.operatingSystem}');
-  print('نسخه سیستم عامل: ${Platform.operatingSystemVersion}');
-  print('تعداد تلاش‌های مجدد: 3');
-  print('فاصله بین تلاش‌ها: 5 ثانیه');
-  print('=====================\n');
 
   bool isConnected = false;
   int retryCount = 0;
@@ -35,39 +28,24 @@ void main() async {
   while (!isConnected && retryCount < maxRetries) {
     try {
       if (retryCount > 0) {
-        print('\n=== تلاش مجدد ${retryCount + 1} از $maxRetries ===');
-        print('در حال انتظار به مدت ${retryDelay.inSeconds} ثانیه...');
         await Future.delayed(retryDelay);
       }
 
-      print('تست اتصال...');
       await Supabase.initialize(
         url: 'https://djsjjgkwffqhlrtrdwda.supabase.co',
         anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqc2pqZ2t3ZmZxaGxydHJkd2RhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3NTQ4OTgsImV4cCI6MjA2MzMzMDg5OH0.uIJ-T8gd5Rs4v-2O2MD5AmIcsmGCQvIFoZPStyevAC8',
       );
       
-      // Initialize user manager and database
       await UserManager.initialize();
       await DatabaseService.initializeDatabase();
       
       isConnected = true;
-      print('اتصال با موفقیت برقرار شد');
-      break;
 
     } catch (e) {
-      print('\n!!! خطا در تلاش ${retryCount + 1} !!!');
-      print('نوع خطا: ${e.runtimeType}');
-      print('پیام خطا: $e');
       retryCount++;
       
       if (retryCount >= maxRetries) {
-        print('\n=== تمام تلاش‌ها ناموفق بود ===');
-        print('لطفاً موارد زیر را بررسی کنید:');
-        print('1. اتصال اینترنت خود را چک کنید');
-        print('2. پورت‌های 80 و 443 در فایروال باز باشند');
-        print('3. برنامه را کاملاً ببندید و دوباره اجرا کنید');
-        print('4. کش برنامه را پاک کنید');
-        print('============================\n');
+        throw Exception('خطا در اتصال به سرور. لطفاً اتصال اینترنت خود را بررسی کنید.');
       }
     }
   }

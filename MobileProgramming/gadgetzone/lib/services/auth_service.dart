@@ -17,15 +17,12 @@ class AuthService {
   static const String smsApiUrl = 'YOUR_SMS_API_URL'; // آدرس API پیامک را اینجا قرار دهید
 
   String _getReadableError(dynamic error) {
-    print('Error details: $error');
-    
     if (error is TimeoutException) {
       return 'زمان پاسخگویی سرور به پایان رسید. لطفاً دوباره تلاش کنید';
     } else if (error is SocketException) {
       return 'خطا در اتصال به سرور. لطفاً اتصال اینترنت خود را بررسی کنید';
     }
-    
-    return 'خطایی رخ داد. لطفاً دوباره تلاش کنید. جزئیات: $error';
+    return 'خطایی رخ داد: $error';
   }
 
   Future<bool> startSignUp({
@@ -35,45 +32,28 @@ class AuthService {
     required String username,
   }) async {
     try {
-      if (_lastAttempt != null) {
-        final timeSinceLastAttempt = DateTime.now().difference(_lastAttempt!);
-        if (timeSinceLastAttempt < _cooldown) {
-          final remainingSeconds = _cooldown.inSeconds - timeSinceLastAttempt.inSeconds;
-          throw 'لطفاً $remainingSeconds ثانیه صبر کنید و دوباره تلاش کنید';
-        }
+      if (_lastAttempt != null && 
+          DateTime.now().difference(_lastAttempt!) < _cooldown) {
+        throw 'لطفاً ${_cooldown.inSeconds} ثانیه صبر کنید';
       }
 
-      String formattedPhone = phone.startsWith('0') ? phone : '0$phone';
-      if (formattedPhone.length != 11) {
-        throw 'شماره موبایل نامعتبر است';
-      }
-
-      final isRegistered = await UserManager.isPhoneNumberTaken(formattedPhone);
-      if (isRegistered) {
+      final isPhoneTaken = await UserManager.isPhoneNumberTaken(phone);
+      if (isPhoneTaken) {
         throw 'این شماره موبایل قبلاً ثبت شده است';
       }
 
-      final otp = SMSService.generateOTP();
-      final success = await SMSService.sendOTP(formattedPhone, otp);
-
-      if (!success) {
-        throw 'خطا در ارسال پیامک';
-      }
-
-      _pendingUsers[formattedPhone] = {
+      final verificationCode = _generateVerificationCode();
+      _pendingUsers[phone] = {
         'name': name,
-        'phone': formattedPhone,
-        'password': password,
+        'password': _hashPassword(password),
         'username': username,
-        'otp': otp,
+        'code': verificationCode,
       };
 
-      userPhone = formattedPhone;
       _lastAttempt = DateTime.now();
-
       return true;
+
     } catch (e) {
-      print('خطا در شروع ثبت‌نام: $e');
       throw _getReadableError(e);
     }
   }
@@ -140,7 +120,7 @@ class AuthService {
   Future<bool> isPhoneNumberTaken(String phone) async {
     try {
       String formattedPhone = phone.startsWith('0') ? phone : '0$phone';
-      final user = await UserManager.getUser();
+      final user = await UserManager.getCurrentUser();
       return user != null && user['phone'] == formattedPhone;
     } catch (e) {
       print('Error in isPhoneNumberTaken: $e');
@@ -225,7 +205,7 @@ class AuthService {
   // تولید کد تایید تصادفی
   static String _generateVerificationCode() {
     final random = Random();
-    return (random.nextInt(900000) + 100000).toString(); // کد 6 رقمی
+    return (random.nextInt(900000) + 100000).toString();
   }
 
   // هش کردن رمز عبور

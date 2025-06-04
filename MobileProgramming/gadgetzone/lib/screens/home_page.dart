@@ -518,6 +518,16 @@ class _HomePageState extends State<HomePage> {
                                             ),
                                           ],
                                         ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'موجودی: ${product.stockQuantity} عدد',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: product.stockQuantity > 0 
+                                              ? Colors.green[700]
+                                              : Colors.red[700],
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),

@@ -14,9 +14,21 @@ class ProductProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  Future<void> checkCategories() async {
+    try {
+      await _productService.checkCategoryMappings();
+    } catch (e) {
+      _error = 'خطا در بررسی دسته‌بندی‌ها: $e';
+      print(_error);
+    }
+  }
+
   Future<void> loadAllProducts() async {
     _setLoading(true);
     try {
+      // اول دسته‌بندی‌ها را بررسی می‌کنیم
+      await checkCategories();
+      
       _products = await _productService.getAllProducts();
       _error = null;
     } catch (e) {

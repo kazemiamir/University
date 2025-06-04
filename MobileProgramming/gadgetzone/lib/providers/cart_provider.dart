@@ -29,6 +29,31 @@ class CartProvider with ChangeNotifier {
       return false;
     }
 
+    // بررسی موجودی محصول
+    if (product.stockQuantity <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('این محصول در حال حاضر ناموجود است'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return false;
+    }
+
+    // بررسی موجودی برای افزایش تعداد
+    if (_items.containsKey(product.id)) {
+      final currentQuantity = _items[product.id]!.quantity;
+      if (currentQuantity >= product.stockQuantity) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('موجودی محصول کافی نیست'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return false;
+      }
+    }
+
     if (_items.containsKey(product.id)) {
       _items.update(
         product.id,

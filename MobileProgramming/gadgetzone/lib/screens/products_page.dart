@@ -335,6 +335,15 @@ class _ProductsPageState extends State<ProductsPage> {
                                                       ),
                                                       textDirection: TextDirection.ltr,
                                                     ),
+                                                    Text(
+                                                      'موجودی: ${product.stockQuantity} عدد',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: product.stockQuantity > 0 
+                                                          ? Colors.green[700]
+                                                          : Colors.red[700],
+                                                      ),
+                                                    ),
                                                   ],
                                                 ),
                                                 IconButton(
